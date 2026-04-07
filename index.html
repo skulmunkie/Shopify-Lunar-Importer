@@ -1,0 +1,1210 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="Lunar Distribution → Shopify product importer">
+<meta name="robots" content="noindex, nofollow">
+<title>Lunar → Shopify Importer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+–ink: #0e0e0f;
+–ink2: #3a3a3f;
+–ink3: #7a7a85;
+–rule: #e2e2e8;
+–surface: #f7f7fa;
+–white: #ffffff;
+–accent: #ff4d00;
+–accent2: #ff8c5a;
+–green: #00a86b;
+–green-bg: #edf9f4;
+–amber: #e07800;
+–amber-bg: #fff8ed;
+–red: #d9232d;
+–red-bg: #fef0f1;
+–blue: #0057ff;
+–blue-bg: #eef3ff;
+–mono: ‘DM Mono’, monospace;
+–sans: ‘Syne’, sans-serif;
+}
+
+body {
+font-family: var(–sans);
+background: var(–surface);
+color: var(–ink);
+min-height: 100vh;
+font-size: 15px;
+line-height: 1.5;
+}
+
+/* ── HEADER ── */
+.app-header {
+background: var(–ink);
+color: var(–white);
+padding: 0 32px;
+height: 56px;
+display: flex;
+align-items: center;
+justify-content: space-between;
+position: sticky;
+top: 0;
+z-index: 100;
+}
+.app-logo {
+font-size: 13px;
+font-weight: 700;
+letter-spacing: 0.12em;
+text-transform: uppercase;
+display: flex;
+align-items: center;
+gap: 10px;
+}
+.app-logo-dot { width: 8px; height: 8px; background: var(–accent); border-radius: 50%; }
+.conn-badge {
+font-family: var(–mono);
+font-size: 11px;
+padding: 4px 10px;
+border-radius: 4px;
+background: rgba(255,255,255,0.08);
+color: rgba(255,255,255,0.6);
+border: 1px solid rgba(255,255,255,0.12);
+cursor: pointer;
+transition: all .15s;
+display: flex; align-items: center; gap: 6px;
+}
+.conn-badge:hover { background: rgba(255,255,255,0.14); }
+.conn-badge .dot { width: 6px; height: 6px; border-radius: 50%; background: var(–ink3); }
+.conn-badge.connected .dot { background: var(–green); }
+.conn-badge.connected { color: rgba(255,255,255,0.85); }
+
+/* ── MAIN LAYOUT ── */
+.main { max-width: 1280px; margin: 0 auto; padding: 32px 32px 80px; }
+
+/* ── STEPPER ── */
+.stepper {
+display: flex;
+align-items: center;
+gap: 0;
+margin-bottom: 40px;
+background: var(–white);
+border: 1px solid var(–rule);
+border-radius: 10px;
+overflow: hidden;
+}
+.step {
+flex: 1;
+display: flex;
+align-items: center;
+gap: 10px;
+padding: 14px 20px;
+font-size: 12px;
+font-weight: 600;
+letter-spacing: 0.05em;
+text-transform: uppercase;
+color: var(–ink3);
+border-right: 1px solid var(–rule);
+transition: all .2s;
+cursor: default;
+}
+.step:last-child { border-right: none; }
+.step-num {
+width: 24px; height: 24px;
+border-radius: 50%;
+background: var(–rule);
+color: var(–ink3);
+font-size: 11px;
+font-weight: 700;
+display: flex; align-items: center; justify-content: center;
+flex-shrink: 0;
+font-family: var(–mono);
+}
+.step.active { color: var(–ink); background: #fff9f7; }
+.step.active .step-num { background: var(–accent); color: var(–white); }
+.step.done { color: var(–green); }
+.step.done .step-num { background: var(–green); color: var(–white); }
+
+/* ── CARDS ── */
+.card {
+background: var(–white);
+border: 1px solid var(–rule);
+border-radius: 12px;
+padding: 32px;
+}
+.card-title {
+font-size: 20px;
+font-weight: 800;
+margin-bottom: 6px;
+}
+.card-sub {
+font-size: 13px;
+color: var(–ink3);
+margin-bottom: 28px;
+font-family: var(–mono);
+}
+
+/* ── CONNECT MODAL ── */
+.modal-overlay {
+display: none;
+position: fixed; inset: 0;
+background: rgba(14,14,15,0.7);
+z-index: 200;
+align-items: center;
+justify-content: center;
+}
+.modal-overlay.open { display: flex; }
+.modal {
+background: var(–white);
+border-radius: 14px;
+padding: 36px;
+width: 440px;
+max-width: 95vw;
+box-shadow: 0 24px 80px rgba(0,0,0,0.22);
+}
+.modal h2 { font-size: 18px; font-weight: 800; margin-bottom: 6px; }
+.modal p { font-size: 13px; color: var(–ink3); margin-bottom: 24px; font-family: var(–mono); }
+
+label { display: block; font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(–ink2); margin-bottom: 6px; }
+input[type=text], input[type=password] {
+width: 100%;
+padding: 10px 14px;
+border: 1.5px solid var(–rule);
+border-radius: 8px;
+font-family: var(–mono);
+font-size: 13px;
+color: var(–ink);
+background: var(–white);
+margin-bottom: 16px;
+transition: border-color .15s;
+outline: none;
+}
+input:focus { border-color: var(–accent); }
+
+.btn {
+display: inline-flex; align-items: center; gap: 7px;
+padding: 10px 20px;
+border-radius: 8px;
+font-family: var(–sans);
+font-size: 13px;
+font-weight: 700;
+letter-spacing: 0.04em;
+cursor: pointer;
+border: none;
+transition: all .15s;
+}
+.btn-primary { background: var(–accent); color: var(–white); }
+.btn-primary:hover { background: #e03c00; }
+.btn-primary:disabled { background: var(–rule); color: var(–ink3); cursor: not-allowed; }
+.btn-ghost { background: transparent; color: var(–ink2); border: 1.5px solid var(–rule); }
+.btn-ghost:hover { background: var(–surface); }
+.btn-sm { padding: 6px 14px; font-size: 12px; }
+.btn-danger { background: var(–red-bg); color: var(–red); border: 1px solid #f5c0c2; }
+.btn-danger:hover { background: #fce8e9; }
+
+/* ── UPLOAD ZONE ── */
+.upload-zone {
+border: 2px dashed var(–rule);
+border-radius: 12px;
+padding: 60px 40px;
+text-align: center;
+cursor: pointer;
+transition: all .2s;
+background: var(–surface);
+}
+.upload-zone:hover, .upload-zone.drag { border-color: var(–accent); background: #fff9f7; }
+.upload-zone svg { display: block; margin: 0 auto 16px; opacity: 0.35; }
+.upload-zone h3 { font-size: 16px; font-weight: 700; margin-bottom: 6px; }
+.upload-zone p { font-size: 13px; color: var(–ink3); font-family: var(–mono); }
+#file-input { display: none; }
+
+/* ── FILE SUMMARY ── */
+.file-meta {
+display: flex;
+gap: 16px;
+flex-wrap: wrap;
+margin-bottom: 24px;
+}
+.meta-chip {
+font-family: var(–mono);
+font-size: 12px;
+padding: 6px 14px;
+border-radius: 6px;
+background: var(–surface);
+border: 1px solid var(–rule);
+color: var(–ink2);
+}
+.meta-chip b { color: var(–ink); }
+
+/* ── TABLE ── */
+.table-wrap { overflow-x: auto; margin-top: 8px; border: 1px solid var(–rule); border-radius: 10px; }
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+thead tr { background: var(–ink); color: var(–white); }
+thead th {
+padding: 10px 14px;
+text-align: left;
+font-size: 10px;
+font-weight: 700;
+letter-spacing: 0.1em;
+text-transform: uppercase;
+white-space: nowrap;
+font-family: var(–mono);
+}
+tbody tr { border-top: 1px solid var(–rule); transition: background .1s; }
+tbody tr:hover { background: var(–surface); }
+tbody tr.promo { background: var(–amber-bg); }
+tbody tr.promo:hover { background: #fff3dc; }
+tbody tr.selected { background: #f0fff8; }
+tbody tr.selected:hover { background: #e6faf2; }
+tbody tr.ignored { opacity: 0.45; }
+td { padding: 9px 14px; vertical-align: middle; }
+td.mono { font-family: var(–mono); }
+
+.badge {
+display: inline-flex; align-items: center; gap: 4px;
+font-size: 10px; font-weight: 700; font-family: var(–mono);
+padding: 3px 8px; border-radius: 4px;
+text-transform: uppercase; letter-spacing: 0.05em; white-space: nowrap;
+}
+.badge-new { background: var(–blue-bg); color: var(–blue); }
+.badge-exists { background: var(–green-bg); color: var(–green); }
+.badge-promo { background: var(–amber-bg); color: var(–amber); }
+.badge-comic { background: #f0eeff; color: #5533cc; }
+.badge-checking { background: var(–surface); color: var(–ink3); }
+.badge-error { background: var(–red-bg); color: var(–red); }
+.badge-created { background: var(–green-bg); color: var(–green); }
+.badge-failed { background: var(–red-bg); color: var(–red); }
+.badge-skipped { background: var(–surface); color: var(–ink3); }
+
+/* checkbox */
+input[type=checkbox] {
+width: 16px; height: 16px;
+accent-color: var(–accent);
+cursor: pointer;
+}
+
+/* ── REVIEW TOOLBAR ── */
+.toolbar {
+display: flex;
+align-items: center;
+gap: 12px;
+margin-bottom: 16px;
+flex-wrap: wrap;
+}
+.toolbar-group { display: flex; gap: 8px; align-items: center; }
+.summary-pills { display: flex; gap: 8px; margin-left: auto; }
+.pill {
+font-family: var(–mono);
+font-size: 12px;
+padding: 6px 14px;
+border-radius: 20px;
+font-weight: 500;
+}
+.pill-green { background: var(–green-bg); color: var(–green); }
+.pill-amber { background: var(–amber-bg); color: var(–amber); }
+.pill-gray { background: var(–surface); color: var(–ink3); border: 1px solid var(–rule); }
+
+/* ── PROGRESS ── */
+.progress-bar-wrap { background: var(–rule); border-radius: 4px; height: 8px; overflow: hidden; margin: 12px 0; }
+.progress-bar { height: 100%; background: var(–accent); border-radius: 4px; transition: width .3s; }
+
+/* ── RESULT SUMMARY ── */
+.result-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 16px; margin: 24px 0; }
+.result-card {
+border-radius: 10px;
+padding: 20px;
+text-align: center;
+}
+.result-card .num { font-size: 36px; font-weight: 800; line-height: 1; margin-bottom: 6px; }
+.result-card .lbl { font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; font-family: var(–mono); }
+.rc-green { background: var(–green-bg); color: var(–green); }
+.rc-amber { background: var(–amber-bg); color: var(–amber); }
+.rc-red { background: var(–red-bg); color: var(–red); }
+.rc-gray { background: var(–surface); color: var(–ink3); border: 1px solid var(–rule); }
+
+/* ── MISC ── */
+.section-divider { border: none; border-top: 1px solid var(–rule); margin: 28px 0; }
+.text-sm { font-size: 12px; color: var(–ink3); font-family: var(–mono); }
+.flex-center { display: flex; align-items: center; gap: 8px; }
+.gap-top { margin-top: 20px; }
+.thumb { width: 36px; height: 36px; border-radius: 4px; object-fit: cover; background: var(–rule); border: 1px solid var(–rule); display: inline-block; vertical-align: middle; }
+.hidden { display: none !important; }
+.spin {
+display: inline-block;
+width: 14px; height: 14px;
+border: 2px solid var(–rule);
+border-top-color: var(–ink3);
+border-radius: 50%;
+animation: spin .7s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.alert { padding: 12px 16px; border-radius: 8px; font-size: 13px; margin-bottom: 16px; }
+.alert-red { background: var(–red-bg); color: var(–red); border: 1px solid #f5c0c2; }
+.alert-amber { background: var(–amber-bg); color: var(–amber); border: 1px solid #f5d8a0; }
+.alert-green { background: var(–green-bg); color: var(–green); border: 1px solid #b3ecda; }
+
+.price-cell { font-family: var(–mono); font-size: 12px; }
+.price-compare { color: var(–ink3); text-decoration: line-through; margin-right: 4px; }
+.price-final { color: var(–ink); font-weight: 500; }
+
+select {
+padding: 6px 10px;
+border: 1.5px solid var(–rule);
+border-radius: 6px;
+font-family: var(–sans);
+font-size: 12px;
+background: var(–white);
+cursor: pointer;
+outline: none;
+}
+select:focus { border-color: var(–accent); }
+
+.log-table td, .log-table th { font-size: 12px; }
+.log-row-fail td { color: var(–red); }
+</style>
+
+</head>
+<body>
+
+<!-- ── CONNECT MODAL ── -->
+
+<div class="modal-overlay" id="connect-modal">
+  <div class="modal">
+    <h2>Connect to Shopify</h2>
+    <p>Credentials are used this session only — never stored.</p>
+    <div id="modal-error" class="alert alert-red hidden"></div>
+    <label>Shopify Store Domain</label>
+    <input type="text" id="store-domain" placeholder="yourstore.myshopify.com" autocomplete="off">
+    <label>Admin API Access Token</label>
+    <input type="password" id="api-token" placeholder="shpat_xxxxxxxxxxxx" autocomplete="off">
+    <div style="display:flex;gap:10px;margin-top:8px;">
+      <button class="btn btn-primary" id="btn-connect-save">Connect</button>
+      <button class="btn btn-ghost" id="btn-connect-cancel">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── HEADER ── -->
+
+<header class="app-header">
+  <div class="app-logo">
+    <span class="app-logo-dot"></span>
+    Lunar → Shopify
+  </div>
+  <button class="conn-badge" id="conn-badge" onclick="openConnectModal()">
+    <span class="dot"></span>
+    <span id="conn-label">Not connected</span>
+  </button>
+</header>
+
+<!-- ── MAIN ── -->
+
+<div class="main">
+
+  <!-- STEPPER -->
+
+  <div class="stepper" id="stepper">
+    <div class="step active" id="step-tab-1"><span class="step-num">1</span> Load File</div>
+    <div class="step" id="step-tab-2"><span class="step-num">2</span> Preview</div>
+    <div class="step" id="step-tab-3"><span class="step-num">3</span> Review</div>
+    <div class="step" id="step-tab-4"><span class="step-num">4</span> Results</div>
+  </div>
+
+  <!-- ══ STEP 1: UPLOAD ══ -->
+
+  <div id="panel-1">
+    <div class="card">
+      <div class="card-title">Load Shipment File</div>
+      <div class="card-sub">CSV export from Lunar Distribution</div>
+
+```
+  <div class="upload-zone" id="upload-zone" onclick="document.getElementById('file-input').click()"
+       ondragover="event.preventDefault();this.classList.add('drag')"
+       ondragleave="this.classList.remove('drag')"
+       ondrop="handleDrop(event)">
+    <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
+      <rect x="8" y="12" width="32" height="28" rx="3" stroke="#0e0e0f" stroke-width="2"/>
+      <path d="M16 22h16M16 28h10" stroke="#0e0e0f" stroke-width="2" stroke-linecap="round"/>
+      <path d="M30 4v10M27 7l3-3 3 3" stroke="#ff4d00" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+    <h3>Drop your shipment CSV here</h3>
+    <p>or click to browse &nbsp;·&nbsp; .csv files only</p>
+  </div>
+  <input type="file" id="file-input" accept=".csv" onchange="handleFileSelect(event)">
+
+  <div id="file-loaded" class="hidden gap-top">
+    <div id="file-meta-bar" class="file-meta"></div>
+    <div id="parse-error" class="alert alert-red hidden"></div>
+    <div style="display:flex;gap:10px;margin-top:8px;">
+      <button class="btn btn-primary" id="btn-to-preview" onclick="goToPreview()">Preview File →</button>
+      <button class="btn btn-ghost btn-sm" onclick="resetUpload()">Clear</button>
+    </div>
+  </div>
+</div>
+```
+
+  </div>
+
+  <!-- ══ STEP 2: PREVIEW ══ -->
+
+  <div id="panel-2" class="hidden">
+    <div class="card">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:24px;">
+        <div>
+          <div class="card-title">File Preview</div>
+          <div class="card-sub" id="preview-sub">Reviewing parsed data</div>
+        </div>
+        <div style="display:flex;gap:10px;">
+          <button class="btn btn-ghost btn-sm" onclick="goTo(1)">← Back</button>
+          <button class="btn btn-primary" id="btn-to-review" onclick="goToReview()">Match Against Shopify →</button>
+        </div>
+      </div>
+
+```
+  <div id="preview-alerts"></div>
+
+  <div class="file-meta" id="preview-stats"></div>
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Cover</th>
+          <th>Code</th>
+          <th>Title</th>
+          <th>Type</th>
+          <th>UPC</th>
+          <th>Price</th>
+          <th>Qty</th>
+          <th>In-Store</th>
+        </tr>
+      </thead>
+      <tbody id="preview-tbody"></tbody>
+    </table>
+  </div>
+</div>
+```
+
+  </div>
+
+  <!-- ══ STEP 3: REVIEW ══ -->
+
+  <div id="panel-3" class="hidden">
+    <div class="card">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:20px;">
+        <div>
+          <div class="card-title">Review & Select</div>
+          <div class="card-sub" id="review-sub">Select products to push to Shopify</div>
+        </div>
+        <div style="display:flex;gap:10px;align-items:center;">
+          <button class="btn btn-ghost btn-sm" onclick="goTo(2)">← Back</button>
+          <button class="btn btn-primary" id="btn-push" onclick="confirmPush()">Push to Shopify →</button>
+        </div>
+      </div>
+
+```
+  <div id="match-progress-wrap">
+    <div class="text-sm" id="match-status-text">Connecting to Shopify…</div>
+    <div class="progress-bar-wrap"><div class="progress-bar" id="match-progress-bar" style="width:0%"></div></div>
+  </div>
+
+  <div id="review-alerts"></div>
+
+  <div class="toolbar" id="review-toolbar" style="display:none">
+    <div class="toolbar-group">
+      <button class="btn btn-ghost btn-sm" onclick="selectAll()">Select All New</button>
+      <button class="btn btn-ghost btn-sm" onclick="selectNone()">Deselect All</button>
+      <select id="filter-select" onchange="applyFilter()">
+        <option value="all">All products</option>
+        <option value="new">New only</option>
+        <option value="exists">Already in Shopify</option>
+        <option value="promo">Promos ($0)</option>
+      </select>
+    </div>
+    <div class="summary-pills" id="summary-pills"></div>
+  </div>
+
+  <div class="table-wrap hidden" id="review-table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th><input type="checkbox" id="check-all" onchange="toggleAll(this.checked)"></th>
+          <th>Cover</th>
+          <th>Code</th>
+          <th>Title</th>
+          <th>Type</th>
+          <th>Price</th>
+          <th>Qty</th>
+          <th>Shopify Status</th>
+          <th>Push Status</th>
+        </tr>
+      </thead>
+      <tbody id="review-tbody"></tbody>
+    </table>
+  </div>
+</div>
+```
+
+  </div>
+
+  <!-- ══ STEP 4: RESULTS ══ -->
+
+  <div id="panel-4" class="hidden">
+    <div class="card">
+      <div class="card-title">Import Complete</div>
+      <div class="card-sub" id="results-sub"></div>
+
+```
+  <div class="result-grid" id="result-grid"></div>
+  <hr class="section-divider">
+
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+    <div style="font-size:13px;font-weight:700;">Session Log</div>
+    <button class="btn btn-ghost btn-sm" onclick="exportLog()">Export CSV</button>
+  </div>
+
+  <div class="table-wrap">
+    <table class="log-table">
+      <thead>
+        <tr>
+          <th>Code</th>
+          <th>Title</th>
+          <th>Outcome</th>
+          <th>Shopify URL</th>
+          <th>Note</th>
+        </tr>
+      </thead>
+      <tbody id="log-tbody"></tbody>
+    </table>
+  </div>
+
+  <div style="margin-top:24px;">
+    <button class="btn btn-ghost" onclick="startOver()">← Start New Import</button>
+  </div>
+</div>
+```
+
+  </div>
+
+</div><!-- /main -->
+
+<script>
+// ════════════════════════════════
+//  STATE
+// ════════════════════════════════
+let shopifyDomain = '';
+let shopifyToken  = '';
+let parsedRows    = [];   // { code, title, qty, retail, discountedPrice, upc, inStoreDate, category, isPromo }
+let reviewRows    = [];   // parsedRows + { shopifyStatus, shopifyId, selected, ignored, pushStatus, pushNote }
+let sessionLog    = [];
+
+// ════════════════════════════════
+//  CONNECT MODAL
+// ════════════════════════════════
+function openConnectModal() {
+  document.getElementById('modal-error').classList.add('hidden');
+  document.getElementById('store-domain').value = shopifyDomain;
+  document.getElementById('connect-modal').classList.add('open');
+}
+function closeConnectModal() {
+  document.getElementById('connect-modal').classList.remove('open');
+}
+document.getElementById('btn-connect-cancel').onclick = closeConnectModal;
+document.getElementById('btn-connect-save').onclick = async () => {
+  const domain = document.getElementById('store-domain').value.trim().replace(/^https?:\/\//, '').replace(/\/$/, '');
+  const token  = document.getElementById('api-token').value.trim();
+  const errEl  = document.getElementById('modal-error');
+  if (!domain || !token) { errEl.textContent = 'Both fields required.'; errEl.classList.remove('hidden'); return; }
+
+  const btn = document.getElementById('btn-connect-save');
+  btn.textContent = 'Connecting…'; btn.disabled = true;
+
+  try {
+    const res = await shopifyFetch(domain, token, 'shop.json');
+    if (res.ok) {
+      shopifyDomain = domain;
+      shopifyToken  = token;
+      updateConnBadge(true, domain);
+      closeConnectModal();
+    } else {
+      errEl.textContent = `Could not connect (${res.status}). Check domain and token.`;
+      errEl.classList.remove('hidden');
+    }
+  } catch(e) {
+    errEl.textContent = 'Network error — check domain and try again.';
+    errEl.classList.remove('hidden');
+  }
+  btn.textContent = 'Connect'; btn.disabled = false;
+};
+
+function updateConnBadge(connected, label) {
+  const badge = document.getElementById('conn-badge');
+  const lbl   = document.getElementById('conn-label');
+  badge.className = 'conn-badge' + (connected ? ' connected' : '');
+  lbl.textContent = connected ? label : 'Not connected';
+}
+
+// ════════════════════════════════
+//  SHOPIFY API HELPER
+// ════════════════════════════════
+async function shopifyFetch(domain, token, path, options = {}) {
+  const base = `https://${domain}/admin/api/2024-04`;
+  return fetch(`${base}/${path}`, {
+    ...options,
+    headers: {
+      'X-Shopify-Access-Token': token,
+      'Content-Type': 'application/json',
+      ...(options.headers || {})
+    }
+  });
+}
+function api(path, options) { return shopifyFetch(shopifyDomain, shopifyToken, path, options); }
+
+// ════════════════════════════════
+//  STEP NAVIGATION
+// ════════════════════════════════
+function goTo(n) {
+  [1,2,3,4].forEach(i => {
+    document.getElementById(`panel-${i}`).classList.toggle('hidden', i !== n);
+    const tab = document.getElementById(`step-tab-${i}`);
+    tab.className = 'step' + (i === n ? ' active' : i < n ? ' done' : '');
+  });
+}
+
+// ════════════════════════════════
+//  STEP 1 — FILE UPLOAD & PARSE
+// ════════════════════════════════
+function handleDrop(e) {
+  e.preventDefault();
+  document.getElementById('upload-zone').classList.remove('drag');
+  const f = e.dataTransfer.files[0];
+  if (f) processFile(f);
+}
+function handleFileSelect(e) {
+  const f = e.target.files[0];
+  if (f) processFile(f);
+}
+function processFile(file) {
+  const reader = new FileReader();
+  reader.onload = e => parseCSV(e.target.result, file.name);
+  reader.readAsText(file);
+}
+function resetUpload() {
+  parsedRows = [];
+  document.getElementById('file-loaded').classList.add('hidden');
+  document.getElementById('file-input').value = '';
+}
+
+function parseCSV(text, filename) {
+  // Normalize line endings
+  const lines = text.replace(/\r\n/g, '\n').replace(/\r/g, '\n').split('\n');
+
+  // Find header row (contains "Code,Title")
+  let headerIdx = -1;
+  for (let i = 0; i < Math.min(10, lines.length); i++) {
+    if (lines[i].includes('Code') && lines[i].includes('Title')) { headerIdx = i; break; }
+  }
+  if (headerIdx === -1) {
+    showParseError('Could not find header row. Expected columns: Code, Title, Qty, etc.');
+    return;
+  }
+
+  const headers = parseCSVLine(lines[headerIdx]).map(h => h.trim());
+  const idx = h => headers.indexOf(h);
+
+  const rows = [];
+  for (let i = headerIdx + 1; i < lines.length; i++) {
+    const line = lines[i].trim();
+    if (!line) continue;
+    const cols = parseCSVLine(line);
+    const get  = h => (cols[idx(h)] || '').trim();
+
+    const code     = get('Code');
+    const title    = get('Title');
+    if (!code || !title) continue;
+
+    const retail   = parseFloat(get('Retail')) || 0;
+    const discounted = parseFloat(get('Discounted Price')) || 0;
+    const qty      = parseInt(get('Qty')) || 0;
+    const upc      = get('UPC');
+    const category = get('Item Category');  // "0"=promo, "1"=comic
+    const isPromo  = category === '0' || (retail === 0 && discounted === 0);
+
+    rows.push({ code, title, qty, retail, discountedPrice: discounted, upc,
+                inStoreDate: get('In-Store Date'), category, isPromo, country: get('Country of Origin') });
+  }
+
+  if (!rows.length) { showParseError('No product rows found after parsing.'); return; }
+
+  parsedRows = rows;
+  document.getElementById('parse-error').classList.add('hidden');
+
+  const comics = rows.filter(r => !r.isPromo).length;
+  const promos = rows.filter(r => r.isPromo).length;
+
+  document.getElementById('file-meta-bar').innerHTML = `
+    <div class="meta-chip">📄 <b>${filename}</b></div>
+    <div class="meta-chip">Rows: <b>${rows.length}</b></div>
+    <div class="meta-chip">Comics: <b>${comics}</b></div>
+    <div class="meta-chip">Promos: <b>${promos}</b></div>
+  `;
+  document.getElementById('file-loaded').classList.remove('hidden');
+}
+
+function parseCSVLine(line) {
+  const result = [];
+  let cur = '', inQ = false;
+  for (let i = 0; i < line.length; i++) {
+    const c = line[i];
+    if (c === '"') { inQ = !inQ; }
+    else if (c === ',' && !inQ) { result.push(cur); cur = ''; }
+    else { cur += c; }
+  }
+  result.push(cur);
+  return result;
+}
+
+function showParseError(msg) {
+  const el = document.getElementById('parse-error');
+  el.textContent = msg; el.classList.remove('hidden');
+  document.getElementById('file-loaded').classList.remove('hidden');
+}
+
+// ════════════════════════════════
+//  STEP 2 — PREVIEW
+// ════════════════════════════════
+function goToPreview() {
+  buildPreviewTable();
+  goTo(2);
+}
+
+function buildPreviewTable() {
+  const comics = parsedRows.filter(r => !r.isPromo).length;
+  const promos = parsedRows.filter(r => r.isPromo).length;
+  document.getElementById('preview-sub').textContent = `${parsedRows.length} rows parsed from shipment file`;
+
+  document.getElementById('preview-stats').innerHTML = `
+    <div class="meta-chip">Total rows: <b>${parsedRows.length}</b></div>
+    <div class="meta-chip" style="background:#f0eeff;border-color:#d4ccff;">Comics: <b>${comics}</b></div>
+    <div class="meta-chip" style="background:var(--amber-bg);border-color:#f5d8a0;">Promos / $0: <b>${promos}</b></div>
+  `;
+
+  const alerts = document.getElementById('preview-alerts');
+  alerts.innerHTML = '';
+  if (promos > 0) {
+    alerts.innerHTML = `<div class="alert alert-amber">⚠ ${promos} promo item(s) detected (Category 0 or $0.00). These will be flagged in the review step — you can choose to include them manually.</div>`;
+  }
+  if (!shopifyDomain) {
+    alerts.innerHTML += `<div class="alert alert-amber">⚠ No Shopify connection yet. Connect before proceeding to match products.</div>`;
+  }
+
+  const tbody = document.getElementById('preview-tbody');
+  tbody.innerHTML = '';
+  parsedRows.forEach(row => {
+    const imgUrl = `https://media.lunardistribution.com/images/covers/${row.code}.jpg`;
+    const tr = document.createElement('tr');
+    if (row.isPromo) tr.classList.add('promo');
+    tr.innerHTML = `
+      <td><img class="thumb" src="${imgUrl}" onerror="this.style.opacity='0.2'" loading="lazy"></td>
+      <td class="mono">${row.code}</td>
+      <td style="max-width:300px;line-height:1.3">${esc(row.title)}</td>
+      <td>${row.isPromo ? '<span class="badge badge-promo">Promo</span>' : '<span class="badge badge-comic">Comic</span>'}</td>
+      <td class="mono" style="font-size:11px">${row.upc || '—'}</td>
+      <td class="price-cell">
+        ${row.retail !== row.discountedPrice && row.retail > 0 ? `<span class="price-compare">$${row.retail.toFixed(2)}</span>` : ''}
+        <span class="price-final">$${row.discountedPrice.toFixed(2)}</span>
+      </td>
+      <td class="mono">${row.qty}</td>
+      <td class="mono" style="font-size:11px">${row.inStoreDate}</td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+// ════════════════════════════════
+//  STEP 3 — REVIEW (MATCH + SELECT)
+// ════════════════════════════════
+async function goToReview() {
+  if (!shopifyDomain) {
+    openConnectModal();
+    return;
+  }
+  // Init review rows
+  reviewRows = parsedRows.map(r => ({
+    ...r,
+    shopifyStatus: 'checking',
+    shopifyId: null,
+    selected: !r.isPromo,
+    ignored: false,
+    pushStatus: 'pending',
+    pushNote: ''
+  }));
+
+  goTo(3);
+  document.getElementById('review-toolbar').style.display = 'none';
+  document.getElementById('review-table-wrap').classList.add('hidden');
+  document.getElementById('match-progress-wrap').style.display = 'block';
+  document.getElementById('review-alerts').innerHTML = '';
+
+  await matchProducts();
+}
+
+async function matchProducts() {
+  const statusEl = document.getElementById('match-status-text');
+  const barEl    = document.getElementById('match-progress-bar');
+
+  statusEl.textContent = 'Fetching existing Shopify products…';
+  barEl.style.width = '5%';
+
+  // Fetch all products from Shopify (paginate)
+  let allProducts = [];
+  let url = 'products.json?limit=250&fields=id,title,variants,handle';
+  try {
+    while (url) {
+      const res = await api(url);
+      if (!res.ok) throw new Error(`API error ${res.status}`);
+      const data = await res.json();
+      allProducts = allProducts.concat(data.products || []);
+      const link = res.headers.get('Link') || '';
+      const next = link.match(/<([^>]+)>;\s*rel="next"/);
+      if (next) {
+        url = next[1].replace(/.*\/admin\/api\/[^/]+\//, '');
+      } else { url = null; }
+    }
+  } catch(e) {
+    document.getElementById('match-status-text').textContent = `Error fetching products: ${e.message}`;
+    document.getElementById('review-alerts').innerHTML = `<div class="alert alert-red">Could not fetch Shopify products: ${e.message}</div>`;
+    return;
+  }
+
+  // Build lookup: sku → shopify product id
+  const skuMap = {};
+  const barcodeMap = {};
+  allProducts.forEach(p => {
+    (p.variants || []).forEach(v => {
+      if (v.sku)     skuMap[v.sku.toUpperCase()] = p.id;
+      if (v.barcode) barcodeMap[v.barcode] = p.id;
+    });
+  });
+
+  barEl.style.width = '60%';
+  statusEl.textContent = `Matched against ${allProducts.length} existing products…`;
+
+  reviewRows.forEach(r => {
+    const byCode    = skuMap[r.code.toUpperCase()];
+    const byBarcode = barcodeMap[r.upc];
+    if (byCode || byBarcode) {
+      r.shopifyStatus = 'exists';
+      r.shopifyId = byCode || byBarcode;
+      r.selected = false; // default: don't re-push existing
+    } else {
+      r.shopifyStatus = 'new';
+    }
+  });
+
+  barEl.style.width = '100%';
+  statusEl.textContent = 'Match complete.';
+  setTimeout(() => {
+    document.getElementById('match-progress-wrap').style.display = 'none';
+    document.getElementById('review-toolbar').style.display = 'flex';
+    document.getElementById('review-table-wrap').classList.remove('hidden');
+    buildReviewTable();
+    updateSummaryPills();
+  }, 400);
+}
+
+function buildReviewTable(filter = 'all') {
+  const tbody = document.getElementById('review-tbody');
+  tbody.innerHTML = '';
+
+  const visible = reviewRows.filter(r => {
+    if (filter === 'new')    return r.shopifyStatus === 'new' && !r.isPromo;
+    if (filter === 'exists') return r.shopifyStatus === 'exists';
+    if (filter === 'promo')  return r.isPromo;
+    return true;
+  });
+
+  visible.forEach(row => {
+    const imgUrl = `https://media.lunardistribution.com/images/covers/${row.code}.jpg`;
+    const tr = document.createElement('tr');
+    tr.id = `rr-${row.code}`;
+    if (row.isPromo) tr.classList.add('promo');
+    if (row.selected) tr.classList.add('selected');
+    if (row.ignored) tr.classList.add('ignored');
+
+    const statusBadge = pushStatusBadge(row);
+    const shopifyBadge = row.shopifyStatus === 'new'
+      ? '<span class="badge badge-new">New</span>'
+      : row.shopifyStatus === 'exists'
+        ? `<span class="badge badge-exists">Exists</span>`
+        : '<span class="badge badge-checking"><span class="spin"></span></span>';
+
+    tr.innerHTML = `
+      <td><input type="checkbox" ${row.selected ? 'checked' : ''} ${row.pushStatus === 'created' ? 'disabled' : ''}
+          onchange="toggleRow('${row.code}', this.checked)"></td>
+      <td><img class="thumb" src="${imgUrl}" onerror="this.style.opacity='0.15'" loading="lazy"></td>
+      <td class="mono" style="font-size:11px">${row.code}</td>
+      <td style="max-width:260px;line-height:1.3;font-size:13px">${esc(row.title)}</td>
+      <td>${row.isPromo ? '<span class="badge badge-promo">Promo</span>' : '<span class="badge badge-comic">Comic</span>'}</td>
+      <td class="price-cell">
+        ${row.retail !== row.discountedPrice && row.retail > 0 ? `<span class="price-compare">$${row.retail.toFixed(2)}</span>` : ''}
+        <span class="price-final">$${row.discountedPrice.toFixed(2)}</span>
+      </td>
+      <td class="mono">${row.qty}</td>
+      <td>${shopifyBadge}</td>
+      <td id="push-status-${row.code}">${statusBadge}</td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+function pushStatusBadge(row) {
+  const map = {
+    pending:  '<span class="badge badge-checking">—</span>',
+    pushing:  '<span class="badge badge-checking"><span class="spin"></span> Pushing</span>',
+    created:  '<span class="badge badge-created">✓ Created</span>',
+    updated:  '<span class="badge badge-created">✓ Updated</span>',
+    skipped:  '<span class="badge badge-skipped">Skipped</span>',
+    failed:   `<span class="badge badge-failed" title="${esc(row.pushNote)}">✗ Failed</span>`
+  };
+  return map[row.pushStatus] || '<span class="badge badge-checking">—</span>';
+}
+
+function toggleRow(code, checked) {
+  const row = reviewRows.find(r => r.code === code);
+  if (row) { row.selected = checked; row.ignored = !checked; }
+  const tr = document.getElementById(`rr-${code}`);
+  if (tr) {
+    tr.classList.toggle('selected', checked);
+    tr.classList.toggle('ignored', !checked);
+  }
+  updateSummaryPills();
+}
+
+function toggleAll(checked) {
+  const filter = document.getElementById('filter-select').value;
+  reviewRows.forEach(r => {
+    const visible = filter === 'all' || (filter === 'new' && r.shopifyStatus === 'new' && !r.isPromo)
+      || (filter === 'exists' && r.shopifyStatus === 'exists') || (filter === 'promo' && r.isPromo);
+    if (visible && r.pushStatus !== 'created') { r.selected = checked; r.ignored = !checked; }
+  });
+  buildReviewTable(filter);
+  updateSummaryPills();
+}
+
+function selectAll() {
+  reviewRows.forEach(r => { if (!r.isPromo && r.shopifyStatus === 'new' && r.pushStatus !== 'created') r.selected = true; });
+  buildReviewTable(document.getElementById('filter-select').value);
+  updateSummaryPills();
+}
+function selectNone() {
+  reviewRows.forEach(r => { if (r.pushStatus !== 'created') { r.selected = false; } });
+  buildReviewTable(document.getElementById('filter-select').value);
+  updateSummaryPills();
+}
+
+function applyFilter() {
+  const f = document.getElementById('filter-select').value;
+  buildReviewTable(f);
+}
+
+function updateSummaryPills() {
+  const sel     = reviewRows.filter(r => r.selected).length;
+  const exists  = reviewRows.filter(r => r.shopifyStatus === 'exists').length;
+  const ignored = reviewRows.filter(r => !r.selected && !r.isPromo).length;
+  document.getElementById('summary-pills').innerHTML = `
+    <span class="pill pill-green">${sel} selected</span>
+    <span class="pill pill-amber">${exists} already in Shopify</span>
+    <span class="pill pill-gray">${ignored} ignored</span>
+  `;
+}
+
+// ════════════════════════════════
+//  PUSH TO SHOPIFY
+// ════════════════════════════════
+function confirmPush() {
+  const toCreate = reviewRows.filter(r => r.selected && r.shopifyStatus === 'new');
+  if (!toCreate.length) {
+    document.getElementById('review-alerts').innerHTML = '<div class="alert alert-amber">No new products selected to push.</div>';
+    return;
+  }
+  if (!confirm(`Push ${toCreate.length} product(s) to Shopify?\n\nThis will create new products in your store.`)) return;
+  pushProducts();
+}
+
+async function pushProducts() {
+  const toPush = reviewRows.filter(r => r.selected && r.shopifyStatus === 'new');
+  document.getElementById('btn-push').disabled = true;
+  document.getElementById('review-alerts').innerHTML = '';
+
+  // Re-fetch location ID for inventory
+  let locationId = null;
+  try {
+    const locRes = await api('locations.json');
+    if (locRes.ok) {
+      const locData = await locRes.json();
+      if (locData.locations && locData.locations.length > 0) {
+        locationId = locData.locations[0].id; // main/first location
+      }
+    }
+  } catch(e) { /* inventory will be skipped */ }
+
+  let created = 0, failed = 0;
+  const BATCH = 5;
+
+  for (let i = 0; i < toPush.length; i += BATCH) {
+    const batch = toPush.slice(i, i + BATCH);
+    await Promise.all(batch.map(row => pushSingleProduct(row, locationId)));
+    created = reviewRows.filter(r => r.pushStatus === 'created').length;
+    failed  = reviewRows.filter(r => r.pushStatus === 'failed').length;
+    buildReviewTable(document.getElementById('filter-select').value);
+    updateSummaryPills();
+  }
+
+  document.getElementById('btn-push').disabled = false;
+  setTimeout(() => goToResults(), 800);
+}
+
+async function pushSingleProduct(row, locationId) {
+  // Update UI
+  const statusEl = document.getElementById(`push-status-${row.code}`);
+  row.pushStatus = 'pushing';
+  if (statusEl) statusEl.innerHTML = pushStatusBadge(row);
+
+  const imgUrl = `https://media.lunardistribution.com/images/covers/${row.code}.jpg`;
+
+  const productPayload = {
+    product: {
+      title: row.title,
+      vendor: 'Lunar Distribution',
+      product_type: row.isPromo ? 'Promo' : 'Comic',
+      status: 'active',
+      tags: row.isPromo ? 'promo' : 'comic',
+      variants: [{
+        sku: row.code,
+        barcode: row.upc || '',
+        price: row.discountedPrice.toFixed(2),
+        compare_at_price: row.retail > row.discountedPrice ? row.retail.toFixed(2) : null,
+        inventory_management: locationId ? 'shopify' : null,
+        inventory_policy: 'deny',
+        weight: 0,
+        weight_unit: 'oz'
+      }],
+      images: [{ src: imgUrl, alt: row.title }]
+    }
+  };
+
+  try {
+    const res = await api('products.json', { method: 'POST', body: JSON.stringify(productPayload) });
+    const data = await res.json();
+
+    if (res.ok && data.product) {
+      row.shopifyId  = data.product.id;
+      row.pushStatus = 'created';
+      row.pushNote   = `https://${shopifyDomain}/admin/products/${data.product.id}`;
+
+      // Set inventory
+      if (locationId && row.qty > 0) {
+        const variantId = data.product.variants[0].inventory_item_id;
+        await api('inventory_levels/set.json', {
+          method: 'POST',
+          body: JSON.stringify({ location_id: locationId, inventory_item_id: variantId, available: row.qty })
+        }).catch(() => {});
+      }
+    } else {
+      row.pushStatus = 'failed';
+      row.pushNote   = data.errors ? JSON.stringify(data.errors).slice(0, 120) : `HTTP ${res.status}`;
+    }
+  } catch(e) {
+    row.pushStatus = 'failed';
+    row.pushNote   = e.message;
+  }
+
+  const el2 = document.getElementById(`push-status-${row.code}`);
+  if (el2) el2.innerHTML = pushStatusBadge(row);
+}
+
+// ════════════════════════════════
+//  STEP 4 — RESULTS
+// ════════════════════════════════
+function goToResults() {
+  const created = reviewRows.filter(r => r.pushStatus === 'created').length;
+  const failed  = reviewRows.filter(r => r.pushStatus === 'failed').length;
+  const skipped = reviewRows.filter(r => r.pushStatus === 'pending' || r.pushStatus === 'skipped').length;
+  const exists  = reviewRows.filter(r => r.shopifyStatus === 'exists').length;
+
+  document.getElementById('results-sub').textContent =
+    `Completed at ${new Date().toLocaleTimeString()} · ${shopifyDomain}`;
+
+  document.getElementById('result-grid').innerHTML = `
+    <div class="result-card rc-green"><div class="num">${created}</div><div class="lbl">Created</div></div>
+    <div class="result-card rc-red"><div class="num">${failed}</div><div class="lbl">Failed</div></div>
+    <div class="result-card rc-amber"><div class="num">${exists}</div><div class="lbl">Already existed</div></div>
+    <div class="result-card rc-gray"><div class="num">${skipped}</div><div class="lbl">Skipped</div></div>
+  `;
+
+  // Build log
+  sessionLog = reviewRows.map(r => ({
+    code:    r.code,
+    title:   r.title,
+    outcome: r.pushStatus,
+    url:     r.pushNote && r.pushNote.startsWith('http') ? r.pushNote : '',
+    note:    r.pushNote && !r.pushNote.startsWith('http') ? r.pushNote : ''
+  }));
+
+  const tbody = document.getElementById('log-tbody');
+  tbody.innerHTML = '';
+  sessionLog.forEach(row => {
+    const tr = document.createElement('tr');
+    if (row.outcome === 'failed') tr.classList.add('log-row-fail');
+    tr.innerHTML = `
+      <td class="mono" style="font-size:11px">${row.code}</td>
+      <td style="font-size:12px;max-width:260px">${esc(row.title)}</td>
+      <td><span class="badge badge-${row.outcome === 'created' ? 'created' : row.outcome === 'failed' ? 'failed' : 'skipped'}">${row.outcome}</span></td>
+      <td>${row.url ? `<a href="${row.url}" target="_blank" style="font-size:11px;color:var(--blue)">View in Shopify ↗</a>` : '—'}</td>
+      <td style="font-size:11px;color:var(--ink3)">${row.note || ''}</td>
+    `;
+    tbody.appendChild(tr);
+  });
+
+  goTo(4);
+}
+
+function exportLog() {
+  const header = 'Code,Title,Outcome,Shopify URL,Note';
+  const rows = sessionLog.map(r =>
+    [r.code, `"${r.title.replace(/"/g, '""')}"`, r.outcome, r.url, `"${r.note.replace(/"/g,'""')}"`].join(',')
+  );
+  const csv = [header, ...rows].join('\n');
+  const blob = new Blob([csv], { type: 'text/csv' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `lunar-import-log-${new Date().toISOString().slice(0,10)}.csv`;
+  a.click();
+}
+
+function startOver() {
+  parsedRows = []; reviewRows = []; sessionLog = [];
+  document.getElementById('file-input').value = '';
+  document.getElementById('file-loaded').classList.add('hidden');
+  document.getElementById('preview-tbody').innerHTML = '';
+  document.getElementById('review-tbody').innerHTML = '';
+  document.getElementById('log-tbody').innerHTML = '';
+  goTo(1);
+}
+
+// ════════════════════════════════
+//  UTILS
+// ════════════════════════════════
+function esc(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+</script>
+
+</body>
+</html>
