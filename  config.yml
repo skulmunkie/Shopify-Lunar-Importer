@@ -1,0 +1,6 @@
+# GitHub Pages config
+# Tells GitHub Pages to serve the site as-is (no Jekyll processing)
+# This prevents GitHub from trying to interpret the HTML as a Jekyll template
+
+exclude:
+  - README.md
