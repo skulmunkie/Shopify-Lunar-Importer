@@ -1,0 +1,88 @@
+# Lunar → Shopify Importer
+
+A browser-based tool for importing Lunar Distribution shipment files into Shopify.
+
+## Live App
+
+Once GitHub Pages is enabled, your app will be at:
+
+```
+https://<your-username>.github.io/<repo-name>/
+```
+
+-----
+
+## How to Deploy
+
+### First time setup
+
+1. Create a new repository on GitHub (public or private)
+1. Upload all files from this folder to the repo
+1. Go to **Settings → Pages**
+1. Under **Source**, select **Deploy from a branch**
+1. Select **main** branch and **/ (root)** folder
+1. Click **Save**
+1. Wait ~60 seconds, then visit your Pages URL
+
+### Updating the app
+
+Just replace `index.html` with the new version and push/upload to GitHub.
+GitHub Pages will redeploy automatically within ~60 seconds.
+
+-----
+
+## How to Use
+
+1. Open the app URL in any browser (desktop or iPhone Safari)
+1. Click **Connect to Shopify** in the bottom status bar
+1. Enter your `myshopify.com` domain and Admin API access token
+1. Load your Lunar Distribution CSV shipment file
+1. Preview → Review & Match → Push to Shopify
+
+### Getting a Shopify Admin API Token
+
+1. In Shopify Admin go to **Settings → Apps and sales channels**
+1. Click **Develop apps** → **Create an app**
+1. Name it (e.g. “Lunar Importer”)
+1. Under **Configuration**, enable these Admin API scopes:
+- `read_products`
+- `write_products`
+- `read_inventory`
+- `write_inventory`
+- `read_locations`
+1. Click **Install app** → **Reveal token once**
+1. Copy the token — starts with `shpat_`
+
+> Tokens are entered per session and never stored by the app.
+
+-----
+
+## File Format
+
+The app expects a Lunar Distribution CSV export with these columns:
+
+|Column            |Used for                     |
+|------------------|-----------------------------|
+|`Code`            |Shopify SKU + cover image URL|
+|`Title`           |Product title                |
+|`Qty`             |Inventory quantity           |
+|`Retail`          |Compare-at price             |
+|`Discounted Price`|Selling price                |
+|`UPC`             |Barcode                      |
+|`In-Store Date`   |Display reference            |
+|`Item Category`   |`1` = Comic, `0` = Promo     |
+
+Cover images are loaded from:
+
+```
+https://media.lunardistribution.com/images/covers/{Code}.jpg
+```
+
+-----
+
+## Notes
+
+- No data is sent to any third party — all API calls go directly from your browser to Shopify
+- Credentials are held in memory only, cleared when the tab is closed
+- Promo items (Category 0 or $0.00) are flagged but not auto-selected — you can include them manually
+- Inventory is set at your store’s first/primary location
