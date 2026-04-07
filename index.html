@@ -653,14 +653,13 @@ function updateConnBadge(connected, label) {
 //  SHOPIFY API HELPER
 // ════════════════════════════════
 async function shopifyFetch(domain, token, path, options = {}) {
-  const base = `https://${domain}/admin/api/2024-04`;
+  const base   = `https://${domain}/admin/api/2024-04`;
+  const method = (options.method || 'GET').toUpperCase();
+  const headers = { 'X-Shopify-Access-Token': token };
+  if (method !== 'GET') headers['Content-Type'] = 'application/json';
   return fetch(`${base}/${path}`, {
     ...options,
-    headers: {
-      'X-Shopify-Access-Token': token,
-      'Content-Type': 'application/json',
-      ...(options.headers || {})
-    }
+    headers: { ...headers, ...(options.headers || {}) }
   });
 }
 function api(path, options) { return shopifyFetch(shopifyDomain, shopifyToken, path, options); }
